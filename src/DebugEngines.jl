@@ -305,9 +305,8 @@ function Base.run(debug_engine::DebugEngine)
     debug_engine.frame = get_next_top_level_frame(debug_engine)
 
     if debug_engine.frame === nothing
-        error("")
-        # put!(debug_engine.next_cmd, (cmd=:stop,))
-        # return LaunchResponseArguments()
+        # Start "Debug" from Code Cell
+        return
     end
 
     if debug_engine.stop_on_entry
