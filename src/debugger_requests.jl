@@ -131,7 +131,7 @@ function attach_request(debug_session::DebugSession, params::JuliaAttachArgument
         filename_to_debug = if params.program !== missing
             isabspath(params.program) ? params.program : joinpath(pwd(), params.program)
         else
-            joinpath(pwd(), "repl_inline.jl")
+            joinpath(pwd(), "##unknown-file.jl")
         end
         put!(debug_session.next_cmd, (cmd=:debug, mod=Main, code=params.code, filename=filename_to_debug))
     else
