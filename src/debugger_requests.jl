@@ -82,11 +82,15 @@ function launch_request(debug_session::DebugSession, params::JuliaLaunchArgument
 
         @debug "We are debugging the file $filename_to_debug."
 
-        file_content = try
-            read(filename_to_debug, String)
-        catch err
-            put!(debug_session.next_cmd, (cmd=:terminate,))
-            return DAPError("Debugger failed to read the file `$filename_to_debug`.\n\n$(sprint(showerror, err))")
+        file_content = if params.code !== missing
+            params.code
+        else
+            try
+                read(filename_to_debug, String)
+            catch err
+                put!(debug_session.next_cmd, (cmd=:terminate,))
+                return DAPError("Debugger failed to read the file `$filename_to_debug`.\n\n$(sprint(showerror, err))")
+            end
         end
 
         if params.compiledModulesOrFunctions !== missing
@@ -123,7 +127,16 @@ function attach_request(debug_session::DebugSession, params::JuliaAttachArgument
         debug_session.compiled_mode = params.compiledMode
     end
 
-    put!(debug_session.attached, true)
+    if params.code !== missing
+        filename_to_debug = if params.program !== missing
+            isabspath(params.program) ? params.program : joinpath(pwd(), params.program)
+        else
+            joinpath(pwd(), "repl_inline.jl")
+        end
+        put!(debug_session.next_cmd, (cmd=:debug, mod=Main, code=params.code, filename=filename_to_debug))
+    else
+        put!(debug_session.attached, true)
+    end
 
     return AttachResponseArguments()
 end
