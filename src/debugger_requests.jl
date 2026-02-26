@@ -629,7 +629,7 @@ function push_module_names!(variables, debug_session, mod)
         Base.isdeprecated(mod, n) && continue
 
         x = getfield(mod, n)
-    x === Main && continue
+        x === Main && continue
 
         s = string(n)
         startswith(s, "#") && continue
