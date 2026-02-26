@@ -84,7 +84,9 @@ end
 
 function toggle_mode_for_all_submodules(mod, compiled, seen = Set())
     for name in names(mod; all = true)
-        if isdefined(mod, name)
+        # it's ok to ignore deprecated bindings here since they are very unlikely
+        # to be a module
+        if isdefined(mod, name) && !Base.isdeprecated(mod, name)
             obj = getfield(mod, name)
             if obj !== mod && obj isa Module && !(obj in seen)
                 push!(seen, obj)
