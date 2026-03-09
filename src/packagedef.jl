@@ -201,3 +201,11 @@ function Base.close(debug_session::DebugSession)
 end
 
 include("debugger_requests.jl")
+
+function _precompile_()
+    ccall(:jl_generating_output, Cint, ()) == 1 || return nothing
+
+    precompile(Base.run, (DebugSession, Nothing))
+end
+
+_precompile_()
