@@ -12,12 +12,6 @@ jobs:
     with:
       include-all-compatible-minor-versions: true
       include-rc-versions: true
-      # Julia 1.0 has no precompile cache locking, and on Windows a `.ji` that another
-      # process holds open cannot be replaced — so as soon as this package has more than
-      # one test item, the test processes race to precompile JuliaInterpreter and whichever
-      # loses dies with "Cannot write cache file". The test items here run in seconds, so
-      # serialising them costs nothing.
-      max-workers: "1"
     permissions: write-all
     secrets:
       codecov_token: ${{ secrets.CODECOV_TOKEN }}
