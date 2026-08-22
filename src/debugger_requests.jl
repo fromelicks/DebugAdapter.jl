@@ -8,7 +8,7 @@ function initialize_request(debug_session::DebugSession, params::InitializeReque
     # stale breakpoints would keep firing. Start every session from a clean slate; the client
     # re-sends the full, current set during the configuration phase that follows.
     # (Function breakpoints get the same treatment in `DebugEngines.set_function_breakpoints!`.)
-    for bp in JuliaInterpreter.breakpoints()
+    for bp in copy(JuliaInterpreter.breakpoints())
         bp isa JuliaInterpreter.BreakpointFileLocation && JuliaInterpreter.remove(bp)
     end
 
