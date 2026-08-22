@@ -1,6 +1,17 @@
 # Request handlers
 
 function initialize_request(debug_session::DebugSession, params::InitializeRequestArguments)
+    # The REPL-hosted debugger runs many sessions in one process (VSCodeServer's
+    # `start_debug_backend`), and JuliaInterpreter's breakpoint registry is process-global.
+    # The client only sends `setBreakpoints` for files that still have breakpoints, so a file
+    # whose breakpoints were all deleted between sessions is never mentioned again and its
+    # stale breakpoints would keep firing. Start every session from a clean slate; the client
+    # re-sends the full, current set during the configuration phase that follows.
+    # (Function breakpoints get the same treatment in `DebugEngines.set_function_breakpoints!`.)
+    for bp in JuliaInterpreter.breakpoints()
+        bp isa JuliaInterpreter.BreakpointFileLocation && JuliaInterpreter.remove(bp)
+    end
+
     return Capabilities(
         true, # supportsConfigurationDoneRequest::Union{Missing,Bool}
         true, # supportsFunctionBreakpoints::Union{Missing,Bool}
@@ -167,12 +178,16 @@ function set_break_points_request(debug_session::DebugSession, params::SetBreakp
     @debug "setbreakpoints_request"
 
     filename = params.source.path
+    # `JuliaInterpreter.breakpoint` normalizes the path it is handed and stores that, so the
+    # removal below has to compare against the normalized form or it silently matches nothing
+    # and leaves the old breakpoints in place.
+    normalized_filename = normpath(filename)
 
     # JuliaInterpreter.remove mutates the vector returned by
     # breakpoints(), so we make a copy to not mess up iteration
     for bp in copy(JuliaInterpreter.breakpoints())
         if bp isa JuliaInterpreter.BreakpointFileLocation
-            if bp.path == filename
+            if bp.path == normalized_filename
                 @debug "Removing breakpoint at $(bp.path):$(bp.line)"
                 JuliaInterpreter.remove(bp)
             end
